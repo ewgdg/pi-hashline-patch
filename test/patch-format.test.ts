@@ -65,6 +65,34 @@ describe("patch parser", () => {
     ]);
   });
 
+
+  it("parses prefix and suffix text context/delete locators", () => {
+    const parsed = parsePatch(["@@", " ^function parse", "-^old value", " $);", "-$old suffix"].join("\n"));
+
+    expect(parsed.hunks[0].ops).toMatchObject([
+      { kind: "context", content: "function parse", textSelector: "prefix" },
+      { kind: "delete", content: "old value", textSelector: "prefix" },
+      { kind: "context", content: ");", textSelector: "suffix" },
+      { kind: "delete", content: "old suffix", textSelector: "suffix" }
+    ]);
+  });
+
+  it("keeps caret and dollar text selectors exact behind colon", () => {
+    const parsed = parsePatch(["@@", " :^literal", "-:cost$"].join("\n"));
+
+    expect(parsed.hunks[0].ops).toMatchObject([
+      { kind: "context", content: "^literal", textSelector: "exact" },
+      { kind: "delete", content: "cost$", textSelector: "exact" }
+    ]);
+  });
+
+  it("rejects empty prefix and suffix text locators", () => {
+    expect(() => parsePatch("@@\n ^")).toThrow("Prefix selectors require non-empty text");
+    expect(() => parsePatch("@@\n-^" )).toThrow("Prefix selectors require non-empty text");
+    expect(() => parsePatch("@@\n $")).toThrow("Suffix selectors require non-empty text");
+    expect(() => parsePatch("@@\n-$")).toThrow("Suffix selectors require non-empty text");
+  });
+
   it("parses blank text context/delete locators", () => {
     const parsed = parsePatch(["@@", " :", "-:"].join("\n"));
 
@@ -102,11 +130,6 @@ describe("patch parser", () => {
     const [op] = patch.hunks[0].ops;
     expect(op.kind).toBe("insert");
     if (op.kind === "insert") expect(op.content).toBe(content);
-  });
-
-  it("rejects deferred prefix selectors clearly", () => {
-    expect(() => parsePatch("@@\n ^prefix")).toThrow("Prefix selectors are not supported yet");
-    expect(() => parsePatch("@@\n-^prefix")).toThrow("Prefix selectors are not supported yet");
   });
 
   it("rejects unsupported operation prefixes", () => {

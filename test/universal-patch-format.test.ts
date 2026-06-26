@@ -47,11 +47,11 @@ describe("universal patch parser", () => {
       "@@ @3...9",
       row(" ", "ctx"),
       row("-", "old"),
-      " :ctx",
+      " ^ctx",
       " ...",
       row("+", "new"),
       "-...",
-      " :after",
+      " $after",
       "*** Delete File: doomed.txt",
       "*** End Patch"
     ].join("\n");
@@ -62,7 +62,43 @@ describe("universal patch parser", () => {
     expect(serialized).toContain("@@ @3...9");
     expect(serialized).toContain(` #${hashLine("ctx")}`);
     expect(serialized).toContain(`-#${hashLine("old")}`);
+    expect(serialized).toContain(" ^ctx");
+    expect(serialized).toContain(" $after");
     expect(parseUniversalPatch(serialized).operations.map((operation) => operation.kind)).toEqual(["add", "update", "delete"]);
+  });
+
+  it("round-trips exact and prefix/suffix text selectors with marker characters", () => {
+    const serialized = serializeUniversalPatch([
+      {
+        kind: "update",
+        path: "existing.txt",
+        patch: {
+          hunks: [{
+            ops: [
+              { kind: "context", content: "^literal", textSelector: "exact" },
+              { kind: "delete", content: "literal$", textSelector: "exact" },
+              { kind: "context", content: "^suffix", textSelector: "suffix" },
+              { kind: "delete", content: "$prefix", textSelector: "prefix" }
+            ]
+          }]
+        }
+      }
+    ]);
+
+    const [operation] = parseUniversalPatch(serialized).operations;
+    expect(operation).toMatchObject({
+      kind: "update",
+      patch: {
+        hunks: [{
+          ops: [
+            { kind: "context", content: "^literal", textSelector: "exact" },
+            { kind: "delete", content: "literal$", textSelector: "exact" },
+            { kind: "context", content: "^suffix", textSelector: "suffix" },
+            { kind: "delete", content: "$prefix", textSelector: "prefix" }
+          ]
+        }]
+      }
+    });
   });
 
   it("rejects serializing invalid hash+text match operations", () => {

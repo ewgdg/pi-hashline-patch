@@ -105,6 +105,13 @@ function serializePatchOp(op: Patch["hunks"][number]["ops"][number]): string {
     throw new InvalidPatchError("Hash+text locators are not supported; serialize hash-only or text-only patch operations.");
   }
   if (op.hash !== undefined) return `${hashPatchOpPrefix(op.kind)}${op.hash}`;
+  return serializeTextSelector(op);
+}
+
+function serializeTextSelector(op: Patch["hunks"][number]["ops"][number]): string {
+  if (op.kind === "insert" || op.kind === "range") return "";
+  if (op.textSelector === "prefix") return `${op.kind === "context" ? " ^" : "-^"}${op.content ?? ""}`;
+  if (op.textSelector === "suffix") return `${op.kind === "context" ? " $" : "-$"}${op.content ?? ""}`;
   return `${textPatchOpPrefix(op.kind)}${op.content ?? ""}`;
 }
 

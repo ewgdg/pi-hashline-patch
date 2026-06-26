@@ -7,10 +7,13 @@ export type PatchOpKind = MatchPatchOpKind | "insert" | "range";
 
 export type PatchOp = MatchPatchOp | InsertPatchOp | RangePatchOp;
 
+export type TextSelectorKind = "exact" | "prefix" | "suffix";
+
 export interface MatchPatchOp {
   kind: MatchPatchOpKind;
   hash?: string;
   content?: string;
+  textSelector?: TextSelectorKind;
 }
 
 export interface InsertPatchOp {
@@ -127,7 +130,7 @@ function parsePatchOp(line: string, hashFn: HashFunction): PatchOp {
     return parseSelectorPatchOp("delete", line.slice(1), line);
   }
 
-  throw new InvalidPatchError(`Malformed patch operation '${line}'. Use ' :<text>', '-:<text>', '+<text>', ' #<hash>', '-#<hash>', ' ...', or '-...'. Prefix selectors (^<prefix>) are not supported yet.`);
+  throw new InvalidPatchError(`Malformed patch operation '${line}'. Use ' :<text>', ' ^<prefix>', ' $<suffix>', '-:<text>', '-^<prefix>', '-$<suffix>', '+<text>', ' #<hash>', '-#<hash>', ' ...', or '-...'.`);
 }
 
 function parseSelectorPatchOp(kind: MatchPatchOpKind, selector: string, line: string): PatchOp {
@@ -135,16 +138,33 @@ function parseSelectorPatchOp(kind: MatchPatchOpKind, selector: string, line: st
     return { kind: "range", rangeKind: kind };
   }
   if (selector.startsWith(":")) {
-    return { kind, content: selector.slice(1) };
+    return { kind, content: selector.slice(1), textSelector: "exact" };
   }
   if (selector.startsWith("#")) {
     return parseHashPatchOp(kind, selector.slice(1), line);
   }
   if (selector.startsWith("^")) {
-    throw new InvalidPatchError(`Prefix selectors are not supported yet in operation '${line}'.`);
+    return parsePrefixPatchOp(kind, selector.slice(1), line);
+  }
+  if (selector.startsWith("$")) {
+    return parseSuffixPatchOp(kind, selector.slice(1), line);
   }
 
-  throw new InvalidPatchError(`Malformed ${kind} selector operation '${line}'. Use ${kind === "context" ? "' :<text>', ' #<hash>', or ' ...'" : "'-:<text>', '-#<hash>', or '-...'"}.`);
+  throw new InvalidPatchError(`Malformed ${kind} selector operation '${line}'. Use ${kind === "context" ? "' :<text>', ' ^<prefix>', ' $<suffix>', ' #<hash>', or ' ...'" : "'-:<text>', '-^<prefix>', '-$<suffix>', '-#<hash>', or '-...'"}.`);
+}
+
+function parsePrefixPatchOp(kind: MatchPatchOpKind, content: string, line: string): MatchPatchOp {
+  if (content.length === 0) {
+    throw new InvalidPatchError(`Malformed ${kind} prefix operation '${line}'. Prefix selectors require non-empty text after '^'.`);
+  }
+  return { kind, content, textSelector: "prefix" };
+}
+
+function parseSuffixPatchOp(kind: MatchPatchOpKind, content: string, line: string): MatchPatchOp {
+  if (content.length === 0) {
+    throw new InvalidPatchError(`Malformed ${kind} suffix operation '${line}'. Suffix selectors require non-empty text after '$'.`);
+  }
+  return { kind, content, textSelector: "suffix" };
 }
 
 function parseHashPatchOp(kind: MatchPatchOpKind, hash: string, line: string): MatchPatchOp {
