@@ -57,10 +57,9 @@ export const patchTool = defineTool({
   name: "patch",
   label: "Hashline Patch",
   description: "Token-efficient tool for editing files with multi-file-capable add/update/delete patches.",
-  promptSnippet: "patch applies one multi-file patch for related add/update/delete edits.",
+  promptSnippet: "Prefer for normal token-efficient file edits; supports multi-file changes in one patch call.",
   promptGuidelines: [
-    "Prefer `patch` tool for normal edits; use one patch call for related edits.",
-    "`patch` tool finds update targets by exact context/delete locators; optional sparse ellipsis ranges can skip or delete lines between matched context locators. No fuzzy matching.",
+    "`patch` tool finds update targets by exact context/delete locators. No fuzzy matching.",
     "During non-dry `patch` tool failures, the tool stops at the failed operation and writes a retry patch file containing unapplied operations. For large patches, save output tokens by editing the retry patch file and passing it via `patch_file` instead of re-emitting large patch text.",
     "On `patch` tool success, agent-visible output is a compact post-apply hash receipt/status for affected sections. Treat returned hashes as current for those sections."
   ],
@@ -69,7 +68,7 @@ export const patchTool = defineTool({
       patch: Type.Optional(
         Type.String({
           description:
-            "Inline patch text. Mutually exclusive with `patch_file`. Must start with `*** Begin Patch` and end with `*** End Patch`. May contain multiple `*** Add File`, `*** Update File`, and `*** Delete File` sections; `*** Update File` sections may contain multiple `@@` hunks. Context/delete locator forms after the operation prefix are `{HASH}`, `{HASH}│{text}`, or `│{text}` using Unicode `│`; bare context/delete text is invalid. Insert lines use `+{text}`. Example:\n```\n*** Begin Patch\n*** Update File: path/to/file.txt\n@@\n {HASH}\n {HASH}│context text\n │context by text\n-{HASH}\n-│old text\n+new text\n*** End Patch\n```"
+            "Inline patch text. Mutually exclusive with `patch_file`. Must start with `*** Begin Patch` and end with `*** End Patch`. May contain multiple `*** Add File`, `*** Update File`, and `*** Delete File` sections; `*** Update File` sections may contain multiple `@@` hunks. Context/delete locator forms after the operation prefix are `{HASH}`, `{HASH}│{text}`, or `│{text}` using Unicode `│`; bare context/delete text is invalid. Insert lines use `+{text}`. Ellipsis ranges must be between context locators: ` ...` preserves skipped lines and `-...` deletes skipped lines. Example:\n```\n*** Begin Patch\n*** Update File: path/to/file.txt\n@@\n │start context\n ...\n {HASH}│middle context\n-...\n+replacement text\n │end context\n*** End Patch\n```"
         })
       ),
       patch_file: Type.Optional(
