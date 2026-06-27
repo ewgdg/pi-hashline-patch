@@ -27,134 +27,133 @@ import { dedentBlock } from "../dedent.js";
 
 const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
   <description>
-    Inline patch text. Mutually exclusive with \`patch_file\`.
-    ## Wrappers
-    Patch must start with \`*** Begin Patch\` and end with \`*** End Patch\`.
-    ## File Sections
-    A patch may contain multiple \`*** Add File\`, \`*** Update File\`, and \`*** Delete File\` sections;
-    A file section header includes a file path.
-    e.g. \`*** Add File: path/to/file.txt\`
-    ### Add File
-    \`Add File\` sections contain body rows only: \`+<text>\`. They do not use \`@@\` hunks.
-    ## Hunk Sections
-    Each \`Update File\` section may contain multiple \`@@\` hunks.
-    Hunk headers are \`@@\`.
-    ### Line Anchor
-    A line anchor can be appended to a hunk header.
-    Line number is 1-based.
-    A hunk with a line anchor looks like: \`@@ @<line>\`, or \`@@ @<start>...<end>\`;
-    \`@@ @<line>\` starts searching at 1-based line \`<line>\` and requires the resolved match start to be at or after that line, while \`@@ @<start>...<end>\` requires the resolved match span to stay within inclusive 1-based line range [start, end].
-    ### Hunk Match
-    A hunk can contain line matchers.
-    The syntax for line matcher is \`<operator><locator_marker>[<locator_value>]\`.
-    Line matches in a hunk section are grouped to form a hunk match.
-    #### Caveats
-    Locator rows are preferred, but malformed unified-diff muscle memory is tolerated.
-    A context/delete row without a locator marker is parsed as unified diff: text after \` \`, \`=\`, or \`-\` is exact line content.
-    If matching finds zero spans, the hunk retries once with every context/delete row treated as unified-diff exact text.
-    Only \`Update File\` section can have hunk match.
-    #### Match Operators
-    Match operator (\`<operator>\`) can be either "-" or a literal space " ".
-    It is the first char of the line matcher.
-    It cannot be omitted;
-    "-" operator is used to delete the matched line.
-    space operator is a context-only noop for matching/anchoring only.
-    #### Locators
-    A locator identifies lines for context or deletion. 
-    It always starts with a \`<locator_marker>\` and optionally a \`<locator_value>\`.
-    ##### Locator Markers
-    A \`<locator_marker>\` is used to specify the type of locator.
-    ":" specifies an exact text locator.
-    "^" specifies a prefix locator.
-    "$" specifies a suffix locator.
-    "*" specifies a contains locator.
-    "#" specifies a hash locator.
-    "?" specifies a combined locator.
-    "..." specifies a range locator.
-    ##### Locator Values
-    \`:<text>\` matches exact raw line text.
-    \`^<prefix>\` matches by prefix string.
-    \`$<suffix>\` matches by suffix string.
-    \`*<text>\` matches by testing if a line contains the \`<text>\` value.
-    \`#<hash>\` matches by line hash value; use \`read_hash\` to get current hashes.
-    \`?<json-obj>\` is a combined locator.
-    \`...\` is a range locator; it has no \`<locator_value>\`.
-    e.g. \` :<text>\` means exact context text match; \`-:<text>\` means exact delete text match.
-    ##### Range Locator
-    A range locator has to be used in-between other line matchers.
-    e.g. \` ...\` preserves/skips lines between surrounding matchers; \`-...\` deletes lines between surrounding matchers.
-    ##### Combined Locator
-    A combined locator uses a JSON object to specify locators to combine.
-    Currently, "prefix", "suffix", "contains" are the allowed locator keys.
-    "contains" key can be mapped to a string or an array of strings.
-    The JSON object must contain at least one key.
-    e.g. \`{"prefix":"a","contains":["b","c"],"suffix":"d"}\`
-    ### Insertion
-    Patch uses a leading "+" operator to insert lines.
-    The "+" char needs to be the first char of the line.
-    The syntax is \`+<text>\`, where \`<text>\` is a raw string for a line content.
-    Only hunk sections or \`Add File\` sections are allowed to insert lines.
+  Inline patch text. Mutually exclusive with \`patch_file\`.
+  ## Wrappers
+  Patch must start with \`*** Begin Patch\` and end with \`*** End Patch\`.
+  ## File Sections
+  A patch may contain multiple \`*** Add File\`, \`*** Update File\`, and \`*** Delete File\` sections;
+  A file section header includes a file path.
+  e.g. \`*** Add File: path/to/file.txt\`
+  ### Add File
+  \`Add File\` sections contain body rows only: \`+<text>\`. They do not use \`@@\` hunks.
+  ## Hunk Sections
+  Each \`Update File\` section may contain multiple \`@@\` hunks.
+  Hunk headers are \`@@\`.
+  ### Line Anchor
+  A line anchor can be appended to a hunk header.
+  Line number is 1-based.
+  A hunk with a line anchor looks like: \`@@ @<line>\`, or \`@@ @<start>...<end>\`;
+  \`@@ @<line>\` starts searching at 1-based line \`<line>\` and requires the resolved match start to be at or after that line, while \`@@ @<start>...<end>\` requires the resolved match span to stay within inclusive 1-based line range [start, end].
+  ### Hunk Match
+  A hunk can contain line matchers.
+  The syntax for line matcher is \`<operator><locator_marker>[<locator_value>]\`.
+  Line matches in a hunk section are grouped to form a hunk match.
+  #### Caveats
+  Locator rows are preferred, but malformed unified-diff muscle memory is tolerated.
+  A context/delete row without a locator marker is parsed as unified diff: text after \` \`, \`=\`, or \`-\` is exact line content.
+  If matching finds zero spans, the hunk retries once with every context/delete row treated as unified-diff exact text.
+  Only \`Update File\` section can have hunk match.
+  #### Match Operators
+  Match operator (\`<operator>\`) can be either "-" or a literal space " ".
+  It is the first char of the line matcher.
+  It cannot be omitted;
+  "-" operator is used to delete the matched line.
+  space operator is a context-only noop for matching/anchoring only.
+  #### Locators
+  A locator identifies lines for context or deletion.
+  It always starts with a \`<locator_marker>\` and optionally a \`<locator_value>\`.
+  ##### Locator Markers
+  A \`<locator_marker>\` is used to specify the type of locator.
+  ":" specifies an exact text locator.
+  "^" specifies a prefix locator.
+  "$" specifies a suffix locator.
+  "*" specifies a contains locator.
+  "#" specifies a hash locator.
+  "?" specifies a combined locator.
+  "..." specifies a range locator.
+  ##### Locator Values
+  \`:<text>\` matches exact raw line text.
+  \`^<prefix>\` matches by prefix string.
+  \`$<suffix>\` matches by suffix string.
+  \`*<text>\` matches by testing if a line contains the \`<text>\` value.
+  \`#<hash>\` matches by line hash value; use \`read_hash\` to get current hashes.
+  \`?<json-obj>\` is a combined locator.
+  \`...\` is a range locator; it has no \`<locator_value>\`.
+  e.g. \` :<text>\` means exact context text match; \`-:<text>\` means exact delete text match.
+  ##### Range Locator
+  A range locator has to be used in-between other line matchers.
+  e.g. \` ...\` preserves/skips lines between surrounding matchers; \`-...\` deletes lines between surrounding matchers.
+  ##### Combined Locator
+  A combined locator uses a JSON object to specify locators to combine.
+  Currently, "prefix", "suffix", "contains" are the allowed locator keys.
+  "contains" key can be mapped to a string or an array of strings.
+  The JSON object must contain at least one key.
+  e.g. \`{"prefix":"a","contains":["b","c"],"suffix":"d"}\`
+  ### Insertion
+  Patch uses a leading "+" operator to insert lines.
+  The "+" char needs to be the first char of the line.
+  The syntax is \`+<text>\`, where \`<text>\` is a raw string for a line content.
+  Only hunk sections or \`Add File\` sections are allowed to insert lines.
   </description>
 
   <examples>
-    Fenced blocks show exact patch columns. Column 1 starts after the fence indentation, so examples can stay indented without hiding patch whitespace.
     <example description="replace one line">
       <content>
-        \`\`\`text
-        old text
-        \`\`\`
+      \`\`\`text
+      old text
+      \`\`\`
       </content>
       <valid_but_not_preferred_patch>
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-        -old text
-        +new text
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+      -old text
+      +new text
+      *** End Patch
+      \`\`\`
       </valid_but_not_preferred_patch>
       <explanation>
-        "-old text" works through unified-diff exact mode. Prefer "-:old text" when intentionally writing locator patches.
+      "-old text" works through unified-diff exact mode. Prefer "-:old text" when intentionally writing locator patches.
       </explanation>
       <patch>
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-        -:old text
-        +new text
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+      -:old text
+      +new text
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        delete the line matching exact text "old text" and insert "new text" at the same location.
+      delete the line matching exact text "old text" and insert "new text" at the same location.
       </explanation>
     </example>
     <example description="blank line operations">
       <content>
-        \`\`\`text
-        before
+      \`\`\`text
+      before
 
 
-        after
-        \`\`\`
+      after
+      \`\`\`
       </content>
       <patch description="delete one blank line and insert one at the end">
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-         :before
-         :
-        -:
-         :after
-        +
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+       :before
+       :
+      -:
+       :after
+      +
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        use " :" to match a blank context line, "-:" to delete a blank line, and "+" with no following text to insert a blank line.
+      use " :" to match a blank context line, "-:" to delete a blank line, and "+" with no following text to insert a blank line.
         <content description="result after patch">
         \`\`\`text
         before
@@ -167,69 +166,69 @@ const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
     </example>
     <example description="range selection">
       <content>
-        \`\`\`text
-        aaa
-        bbb
-        ccc
-        ddd
-        \`\`\`
+      \`\`\`text
+      aaa
+      bbb
+      ccc
+      ddd
+      \`\`\`
       </content>
       <patch description="bulk delete all">
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-        -:aaa
-        -...
-        -^d
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+      -:aaa
+      -...
+      -^d
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        find a hunk with first line matches "aaa" and last line starts with "d".
-        delete the first line and last line.
-        delete lines in-between first and last line using range locator.
-        result is that all lines are deleted.
+      find a hunk with first line matches "aaa" and last line starts with "d".
+      delete the first line and last line.
+      delete lines in-between first and last line using range locator.
+      result is that all lines are deleted.
       </explanation>
     </example>
     <example description="disambiguate from duplicate lines">
       <content>
-        \`\`\`text
-        aaa
-        aaa
-        ccc
-        ccc
-        \`\`\`
+      \`\`\`text
+      aaa
+      aaa
+      ccc
+      ccc
+      \`\`\`
       </content>
       <bad_patch>
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-        aaa
-        +bbb
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+      aaa
+      +bbb
+      *** End Patch
+      \`\`\`
       </bad_patch>
       <explanation>
-        "aaa" is invalid, it does not have an operator as the first char.
-        It should be " :aaa".
+      "aaa" is invalid, it does not have an operator as the first char.
+      It should be " :aaa".
       </explanation>
       <patch>
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@ @2
-         :aaa
-        +bbb
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@ @2
+       :aaa
+      +bbb
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        use line anchor to search at or after line 2.
-        so it can locate the only match for "aaa" at line 2.
-        similarly, we can use "@2...2" to pin the line range to [2,2].
-        then insert a new line after.
+      use line anchor to search at or after line 2.
+      so it can locate the only match for "aaa" at line 2.
+      similarly, we can use "@2...2" to pin the line range to [2,2].
+      then insert a new line after.
         <content description="result after patch">
         \`\`\`text
         aaa
@@ -241,41 +240,41 @@ const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
         </content>
       </explanation>
       <patch>
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-         :aaa
-        +bbb
-         :ccc
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+       :aaa
+      +bbb
+       :ccc
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        find a hunk with adjacent "aaa" and "ccc" lines.
-        insert a new line "bbb" in-between.
+      find a hunk with adjacent "aaa" and "ccc" lines.
+      insert a new line "bbb" in-between.
       </explanation>
     </example>
     <example description="use combined locator">
       <content>
-        \`\`\`text
-        abcd
-        cbdd
-        acbb
-        \`\`\`
+      \`\`\`text
+      abcd
+      cbdd
+      acbb
+      \`\`\`
       </content>
       <patch description="delete the line 'abcd'">
-        \`\`\`patch
-        *** Begin Patch
-        *** Update File: path/to/file.txt
-        @@
-        -?{"prefix":"a","suffix":"d"}
-        *** End Patch
-        \`\`\`
+      \`\`\`patch
+      *** Begin Patch
+      *** Update File: path/to/file.txt
+      @@
+      -?{"prefix":"a","suffix":"d"}
+      *** End Patch
+      \`\`\`
       </patch>
       <explanation>
-        the locator targets line starts with "a" and ends with "d".
-        the only match is "abcd".
+      the locator targets line starts with "a" and ends with "d".
+      the only match is "abcd".
       </explanation>
     </example>
   </examples>

@@ -15,6 +15,10 @@ const resultText = (result: Awaited<ReturnType<typeof patchTool.execute>>) => {
   return content.text;
 };
 const detailsDiff = (result: Awaited<ReturnType<typeof patchTool.execute>>) => (result.details as { diff: string }).diff;
+const patchParameterDescription = () => {
+  const parameters = patchTool.parameters as { properties: { patch: { description?: string } } };
+  return parameters.properties.patch.description ?? "";
+};
 const retryPatchPathFrom = (message: string) => {
   const match = /^Retry patch: (.+)$/m.exec(message);
   if (!match) {
@@ -47,6 +51,16 @@ async function patchFile(initialText: string, diff: string, path = "file.txt") {
 }
 
 describe("patch visible status", () => {
+  it("keeps XML tag text aligned with its enclosing tag", () => {
+    const description = patchParameterDescription();
+
+    expect(description).toContain("<description>\nInline patch text.");
+    expect(description).not.toContain("<description>\n  Inline patch text.");
+    expect(description).toMatch(/^ {4}<content>\n {4}```text\n {4}old text\n {4}```\n {4}<\/content>/m);
+    expect(description).not.toMatch(/^ {4}<content>\n {6}```text/m);
+    expect(description).toMatch(/^ {4}@@\n {5}:before\n {5}:\n {4}-:\n {5}:after\n {4}\+\n {4}\*\*\* End Patch/m);
+  });
+
   it("is agent-visible as compact status without hashes or file content", async () => {
     const diff = ["@@", row("=", "a"), row("-", "old"), row("+", "new"), row("=", "z")].join("\n");
 
