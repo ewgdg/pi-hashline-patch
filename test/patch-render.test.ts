@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   COLLAPSED_ERROR_INPUT_MAX_LINES,
   COLLAPSED_RESULT_DIFF_MAX_LINES,
+  COLLAPSED_STREAMING_INPUT_MAX_LINES,
   EXPANDED_RESULT_DIFF_MAX_LINES,
+  buildPatchCallRenderText,
   buildPatchResultRenderText,
   formatPatchResultDiff,
   getPatchDiffStats,
@@ -17,7 +19,38 @@ const theme: PatchRenderTheme = {
 
 const makeDiff = (lineCount: number) => Array.from({ length: lineCount }, (_, index) => ` line-${index}`).join("\n");
 
-describe("patch result renderer helpers", () => {
+describe("patch renderer helpers", () => {
+  it("renders streaming patch input while args are incomplete, showing latest lines", () => {
+    const patch = Array.from({ length: COLLAPSED_STREAMING_INPUT_MAX_LINES + 2 }, (_, index) => `line-${index + 1}`).join("\n");
+
+    const rendered = buildPatchCallRenderText({
+      input: { patch },
+      expanded: false,
+      argsComplete: false,
+      theme
+    });
+
+    expect(rendered).toContain("<toolTitle>patch</toolTitle>");
+    expect(rendered).toContain(`Agent input streaming (patch, last ${COLLAPSED_STREAMING_INPUT_MAX_LINES}/${COLLAPSED_STREAMING_INPUT_MAX_LINES + 2} lines):`);
+    expect(rendered).toContain("... 2 earlier input lines omitted; Ctrl+O to expand");
+    expect(rendered).toContain("<dim> 3 │ </dim><toolDiffContext>line-3</toolDiffContext>");
+    expect(rendered).toContain("<dim>18 │ </dim><toolDiffContext>line-18</toolDiffContext>");
+    expect(rendered).not.toContain("<dim> 1 │ </dim>");
+    expect(rendered).not.toContain("<dim> 2 │ </dim>");
+  });
+
+  it("hides streaming input once args are complete so result rendering can take over", () => {
+    const rendered = buildPatchCallRenderText({
+      input: { patch: "*** Begin Patch\n*** End Patch", dry_run: true },
+      expanded: false,
+      argsComplete: true,
+      theme
+    });
+
+    expect(rendered).toBe("<toolTitle>patch</toolTitle> <muted>dry-run</muted>");
+    expect(rendered).not.toContain("Agent input streaming");
+    expect(rendered).not.toContain("*** Begin Patch");
+  });
   it("extracts model-visible text and details diff without changing either payload", () => {
     const result = { content: [{ type: "text", text: "compact status" }] };
     const details = { diff: "--- a/file\n+++ b/file\n-old\n+new" };

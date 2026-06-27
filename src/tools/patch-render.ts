@@ -6,6 +6,8 @@ export const COLLAPSED_ERROR_INPUT_MAX_LINES = 16;
 export const EXPANDED_ERROR_INPUT_MAX_LINES = 200;
 export const COLLAPSED_ERROR_INPUT_CONTEXT_RADIUS = 4;
 export const EXPANDED_ERROR_INPUT_CONTEXT_RADIUS = 20;
+export const COLLAPSED_STREAMING_INPUT_MAX_LINES = 16;
+export const EXPANDED_STREAMING_INPUT_MAX_LINES = 200;
 
 export type PatchRenderTheme = Pick<Theme, "fg">;
 
@@ -98,6 +100,46 @@ export function formatPatchErrorInputPreview(input: unknown, expanded: boolean, 
   return undefined;
 }
 
+export function buildPatchCallRenderText(options: {
+  input: unknown;
+  expanded: boolean;
+  argsComplete: boolean;
+  theme: PatchRenderTheme;
+}): string {
+  const { input, expanded, argsComplete, theme } = options;
+  const title = theme.fg("toolTitle", "patch");
+
+  if (argsComplete) {
+    return formatPatchCallHeader(input, title, theme);
+  }
+
+  const preview = formatPatchStreamingInputPreview(input, expanded, theme);
+  if (!preview) {
+    return [title, theme.fg("muted", "Agent input streaming...")].join("\n");
+  }
+
+  return [title, preview].join("\n");
+}
+
+export function formatPatchStreamingInputPreview(input: unknown, expanded: boolean, theme: PatchRenderTheme): string | undefined {
+  if (!isRecord(input)) {
+    return undefined;
+  }
+
+  if (typeof input.patch === "string") {
+    return formatPatchStreamingTextPreview("patch", input.patch, expanded, theme);
+  }
+
+  if (typeof input.patch_file === "string") {
+    return [
+      theme.fg("muted", "Agent input streaming:"),
+      `${theme.fg("dim", "patch_file: ")}${theme.fg("toolDiffContext", input.patch_file)}`
+    ].join("\n");
+  }
+
+  return undefined;
+}
+
 export function buildPatchResultRenderText(options: {
   resultText?: string;
   details: unknown;
@@ -153,6 +195,39 @@ function formatPatchTextPreview(label: string, text: string, expanded: boolean, 
 
   const countSummary = lines.length === shownLines.length ? `${lines.length} lines` : `${shownLines.length}/${lines.length} lines`;
   return [theme.fg("muted", `Agent input preview (${label}, ${countSummary}):`), ...renderedLines].join("\n");
+}
+
+function formatPatchStreamingTextPreview(label: string, text: string, expanded: boolean, theme: PatchRenderTheme): string {
+  const lines = splitInputLines(text);
+  const maxLines = expanded ? EXPANDED_STREAMING_INPUT_MAX_LINES : COLLAPSED_STREAMING_INPUT_MAX_LINES;
+  const shownLines = lines.slice(-maxLines);
+  const omittedLineCount = Math.max(0, lines.length - shownLines.length);
+  const startLine = omittedLineCount + 1;
+  const renderedLines = renderNumberedPatchLines(shownLines, startLine, lines.length, theme);
+
+  if (omittedLineCount > 0) {
+    const suffix = expanded ? "omitted" : "omitted; Ctrl+O to expand";
+    renderedLines.unshift(theme.fg("muted", `... ${omittedLineCount} earlier input lines ${suffix}`));
+  }
+
+  const countSummary = lines.length === shownLines.length ? `${lines.length} lines` : `last ${shownLines.length}/${lines.length} lines`;
+  return [theme.fg("muted", `Agent input streaming (${label}, ${countSummary}):`), ...renderedLines].join("\n");
+}
+
+function formatPatchCallHeader(input: unknown, title: string, theme: PatchRenderTheme): string {
+  if (!isRecord(input)) {
+    return title;
+  }
+
+  const suffixes: string[] = [];
+  if (input.dry_run === true) {
+    suffixes.push(theme.fg("muted", "dry-run"));
+  }
+  if (typeof input.patch_file === "string") {
+    suffixes.push(theme.fg("dim", input.patch_file));
+  }
+
+  return [title, ...suffixes].join(" ");
 }
 
 function formatPatchTextWindow(label: string, lines: readonly string[], expanded: boolean, theme: PatchRenderTheme, targetLine: number): string {

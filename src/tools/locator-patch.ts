@@ -22,7 +22,7 @@ import {
 import { countRenderedLines, getVisibleOutputOverflow, type VisibleOutputOverflow } from "../output-size.js";
 import { parseText, serializeText } from "../text-lines.js";
 import { parsePatchInput, serializeUniversalPatch, type AddFileOperation, type UniversalPatchOperation } from "../universal-patch-format.js";
-import { buildPatchResultRenderText, getPatchResultText } from "./patch-render.js";
+import { buildPatchCallRenderText, buildPatchResultRenderText, getPatchResultText } from "./patch-render.js";
 import { dedentBlock } from "../dedent.js";
 
 const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
@@ -374,6 +374,18 @@ export const patchTool = defineTool({
     }
 
     return buildPatchToolResult(plannedChanges, false);
+  },
+  renderCall(_args, theme, context) {
+    return new Text(
+      buildPatchCallRenderText({
+        input: context.args,
+        expanded: context.expanded,
+        argsComplete: context.argsComplete,
+        theme
+      }),
+      0,
+      0
+    );
   },
   renderResult(result, { expanded, isPartial }, theme, context) {
     const resultText = getPatchResultText(result);
