@@ -28,6 +28,44 @@ describe("universal patch parser", () => {
     expect(() => parsePatchInput(["@@", row("-", "old"), row("+", "new")].join("\n"))).toThrow("[E_INVALID_PATCH]");
   });
 
+  it("dedents uniformly indented patch input while preserving locator content indentation", () => {
+    const parsed = parsePatchInput(`
+      *** Begin Patch
+      *** Add File: added.txt
+      +    indented add content
+      *** Update File: existing.txt
+      @@
+      =:  old context
+      +  new content
+      *** End Patch
+    `);
+
+    expect(parsed.operations[0]).toMatchObject({ kind: "add", path: "added.txt", lines: ["    indented add content"] });
+    expect(parsed.operations[1]).toMatchObject({
+      kind: "update",
+      patch: {
+        hunks: [{
+          ops: [
+            { kind: "context", content: "  old context" },
+            { kind: "insert", content: "  new content" }
+          ]
+        }]
+      }
+    });
+  });
+
+  it("keeps malformed extra leading space after wrapper dedent", () => {
+    const source = `
+      *** Begin Patch
+      *** Update File: existing.txt
+      @@
+       :aaa
+      *** End Patch
+    `;
+
+    expect(() => parsePatchInput(source)).toThrow("Leading-space context rows are not supported");
+  });
+
   it("rejects add body lines without Codex plus prefixes", () => {
     const patch = ["*** Begin Patch", "*** Add File: added.txt", "missing prefix", "*** End Patch"].join("\n");
     expect(() => parseUniversalPatch(patch)).toThrow("[E_INVALID_PATCH]");

@@ -1,5 +1,6 @@
 export * from "./apply.js";
 export * from "./content-diff.js";
+export * from "./dedent.js";
 export * from "./errors.js";
 export * from "./fs-text.js";
 export * from "./hash.js";

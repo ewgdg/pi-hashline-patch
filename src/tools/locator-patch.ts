@@ -23,26 +23,7 @@ import { countRenderedLines, getVisibleOutputOverflow, type VisibleOutputOverflo
 import { parseText, serializeText } from "../text-lines.js";
 import { parsePatchInput, serializeUniversalPatch, type AddFileOperation, type UniversalPatchOperation } from "../universal-patch-format.js";
 import { buildPatchResultRenderText, getPatchResultText } from "./patch-render.js";
-
-function dedentBlock(text: string): string {
-  const lines = text.split("\n");
-  let firstContentLine = 0;
-  while (firstContentLine < lines.length && lines[firstContentLine]?.trim().length === 0) {
-    firstContentLine += 1;
-  }
-
-  let lastContentLine = lines.length - 1;
-  while (lastContentLine >= firstContentLine && lines[lastContentLine]?.trim().length === 0) {
-    lastContentLine -= 1;
-  }
-
-  const contentLines = lines.slice(firstContentLine, lastContentLine + 1);
-  const sharedIndent = Math.min(
-    ...contentLines.filter((line) => line.trim().length > 0).map((line) => line.match(/^\s*/)?.[0].length ?? 0)
-  );
-
-  return contentLines.map((line) => line.slice(Math.min(sharedIndent, line.length))).join("\n");
-}
+import { dedentBlock } from "../dedent.js";
 
 const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
   <description>

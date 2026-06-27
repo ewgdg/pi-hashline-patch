@@ -1,3 +1,4 @@
+import { dedentBlock } from "./dedent.js";
 import { InvalidPatchError } from "./errors.js";
 import { type HashFunction, hashLine } from "./hash.js";
 import { normalizeCombinedTextSelector, parsePatch, type Patch } from "./patch-format.js";
@@ -36,7 +37,7 @@ interface SectionHeader {
 const SECTION_HEADER_PATTERN = /^\*\*\* (Add|Update|Delete) File: (.+)$/;
 
 export function parseUniversalPatch(patchText: string, hashFn: HashFunction = hashLine): UniversalPatch {
-  const lines = splitPatchLines(patchText);
+  const lines = splitPatchLines(dedentBlock(patchText));
   if (lines[0] !== "*** Begin Patch") {
     throw new InvalidPatchError("Universal patch must start with '*** Begin Patch'.");
   }
@@ -65,11 +66,12 @@ export function parseUniversalPatch(patchText: string, hashFn: HashFunction = ha
 }
 
 export function parsePatchInput(patchText: string, hashFn: HashFunction = hashLine): UniversalPatch {
-  const firstMeaningfulLine = splitPatchLines(patchText).find((line) => line.length > 0);
+  const normalizedPatchText = dedentBlock(patchText);
+  const firstMeaningfulLine = splitPatchLines(normalizedPatchText).find((line) => line.length > 0);
   if (firstMeaningfulLine !== "*** Begin Patch") {
     throw new InvalidPatchError("Patch must be a Codex-like universal patch starting with '*** Begin Patch'.");
   }
-  return parseUniversalPatch(patchText, hashFn);
+  return parseUniversalPatch(normalizedPatchText, hashFn);
 }
 
 export function serializeUniversalPatch(operations: readonly UniversalPatchOperation[]): string {
