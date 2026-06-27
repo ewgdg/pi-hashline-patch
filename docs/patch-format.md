@@ -2,13 +2,14 @@
 
 ## Optional hash locators
 
-Use `read_hash` to render eligible logical text lines as:
+Use `read_hash` to render logical text lines as:
 
 ```text
 HASH│content
+│content without a visible hash
 ```
 
-Short or low-entropy lines may remain plain in `read_hash` output: `trim().length < 8` or entropy `< 10` shows no hash, entropy `< 20` shows 3 chars, otherwise 4. `HASH` is the first 3 or 4 characters of the SHA-256 based full line hash. Line terminators are excluded. Duplicate content produces same full hash and same visible prefix.
+Short or low-entropy lines still include the `│` marker but no visible hash: `trim().length < 8` or entropy `< 10` shows no hash, entropy `< 20` shows 3 chars, otherwise 4. `HASH` is the first 3 or 4 characters of the SHA-256 based full line hash. Line terminators are excluded. Duplicate content produces same full hash and same visible prefix.
 
 Files are UTF-8 text. UTF-8 BOM is preserved for updates. Original first newline convention (`LF`, `CRLF`, or `CR`) and final-newline state are preserved on update write. Empty file has zero logical lines.
 

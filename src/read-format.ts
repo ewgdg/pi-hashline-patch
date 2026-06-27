@@ -14,7 +14,7 @@ export function renderHashLines(entries: readonly HashLineEntry[]): string {
   return entries
     .map(({ hash, content }) => {
       const width = hashLengthForLine(content);
-      return width === 0 ? content : `${hash.slice(0, width)}${HASH_SEPARATOR}${content}`;
+      return `${width === 0 ? "" : hash.slice(0, width)}${HASH_SEPARATOR}${content}`;
     })
     .join("\n");
 }

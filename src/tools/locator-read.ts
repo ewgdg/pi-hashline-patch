@@ -10,7 +10,7 @@ const MAX_LIMIT = LLM_VISIBLE_OUTPUT_MAX_LINES;
 export const readHashTool = defineTool({
   name: "read_hash",
   label: "Read Hash",
-  description: "Read text lines for patching. Eligible lines render as HASH│content; short or low-entropy lines may render as plain content without a hash.",
+  description: "Read text lines for patching. Eligible lines render as HASH│content; short or low-entropy lines render as │content without a hash.",
   parameters: Type.Object(
     {
       path: Type.String({ description: "Text file path to read." }),

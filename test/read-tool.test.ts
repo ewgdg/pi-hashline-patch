@@ -18,13 +18,14 @@ const firstText = (result: Awaited<ReturnType<typeof readHashTool.execute>>) => 
 describe("read_hash tool", () => {
   it("is agent-visible as read_hash and returns variable HASH│content rows", async () => {
     const dir = await makeTempDir();
-    await writeFile(join(dir, "file.txt"), "short\nconst enabled = true;\nfunction parsePatchOp(line: string): PatchOp {\n");
+    await writeFile(join(dir, "file.txt"), "short\n\nconst enabled = true;\nfunction parsePatchOp(line: string): PatchOp {\n");
 
     const result = await readHashTool.execute("tool-call", { path: "file.txt" }, undefined, undefined, { cwd: dir } as never);
 
     expect(readHashTool.name).toBe("read_hash");
     expect(firstText(result)).toBe([
-      "short",
+      "│short",
+      "│",
       `${hashLine("const enabled = true;").slice(0, 3)}│const enabled = true;`,
       `${hashLine("function parsePatchOp(line: string): PatchOp {")}│function parsePatchOp(line: string): PatchOp {`
     ].join("\n"));
