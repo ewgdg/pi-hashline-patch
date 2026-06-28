@@ -119,7 +119,7 @@ const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
   </caveats>
 
   <examples>
-    <example description="patch locator efficiency">
+    <example description="patch locator cost efficiency">
       <content>
       aaaaaaaaaab
       aaaaacaaaaa
@@ -304,7 +304,7 @@ export const patchTool = defineTool({
   name: "patch",
   label: "Locator Patch",
   description: "Token-efficient tool for editing files with multi-file-capable add/update/delete patches.",
-  promptSnippet: "Use this tool for patching.",
+  promptSnippet: "Use this tool for patching. Pick the locator costing the least.",
   promptGuidelines: buildPatchPromptGuidelines(false),
   parameters: Type.Object(
     {
