@@ -150,9 +150,9 @@ const PATCH_PARAMETER_DESCRIPTION = dedentBlock(`
       *** End Patch
       </patch>
       <explanation>
-      "$b" locates first line that ends with "b".
+      "$b" locates first line that ends with "b"; this is better than "-:aaaaaaaaaab" bc it is shorter.
       "*c" locates the second line that contains "c".
-      In this example, " ..." could replace " *c" to preserve the middle line.
+      In this example, "..." could replace " *c" to preserve the middle line.
       "^b" locates the third line starts with "b".
       no need for exact match.
       </explanation>
