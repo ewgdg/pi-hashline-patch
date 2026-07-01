@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { hashLine, parseText } from "../src/api.js";
 import { patchTool } from "../src/tools/locator-patch.js";
@@ -1043,7 +1043,10 @@ describe("patch visible status", () => {
     );
     expect(message).toContain("[E_INVALID_PATCH]");
     expect(message).toContain("Retry patch:");
-    await expect(readFile(retryPatchPathFrom(message), "utf8")).resolves.toBe(
+    const retryPatchPath = retryPatchPathFrom(message);
+    expect(dirname(retryPatchPath)).toBe(join(tmpdir(), "pi-locator-patch"));
+    expect(basename(retryPatchPath)).toMatch(/^[0-9a-f-]+\.patch$/);
+    await expect(readFile(retryPatchPath, "utf8")).resolves.toBe(
       patch,
     );
   });
@@ -1052,7 +1055,7 @@ describe("patch visible status", () => {
     const dir = await makePlainTempDir();
     const file = join(dir, "file.txt");
     await writeFile(file, "old\n");
-    process.env.TMPDIR = join(dir, "missing-tmp");
+    process.env.TMPDIR = join(file, "missing-tmp");
 
     const message = await rejectionMessage(
       patchTool.execute(

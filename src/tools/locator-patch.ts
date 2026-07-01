@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import {
   access,
-  mkdtemp,
+  mkdir,
   realpath,
   writeFile as writeRawFile,
 } from "node:fs/promises";
@@ -739,8 +740,7 @@ async function writeRetryPatch(
   universalPatch: UniversalPatch,
   startOperationIndex: number,
 ): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "pi-locator-patch-"));
-  const retryPatchPath = join(directory, "retry.patch");
+  const retryPatchPath = await createRetryPatchPath();
   await writeRawFile(retryPatchPath, copyUniversalPatchInputTail(universalPatch, startOperationIndex), {
     encoding: "utf8",
     mode: 0o600,
@@ -761,14 +761,19 @@ async function tryWriteRetryPatch(
 }
 
 async function writeRawRetryPatch(patchText: string): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "pi-locator-patch-"));
-  const retryPatchPath = join(directory, "retry.patch");
+  const retryPatchPath = await createRetryPatchPath();
   await writeRawFile(retryPatchPath, patchText, {
     encoding: "utf8",
     mode: 0o600,
     flag: "wx",
   });
   return retryPatchPath;
+}
+
+async function createRetryPatchPath(): Promise<string> {
+  const directory = join(tmpdir(), "pi-locator-patch");
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  return join(directory, `${randomUUID()}.patch`);
 }
 
 function renderSequentialFailureMessage(args: {
